@@ -1,0 +1,130 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model Product {
+  id          Int        @id @default(autoincrement())
+  name        String
+  description String?    @default("")
+  price       Float
+  image       String?
+  categories  Category[]
+  cartItems   CartItem[]
+  createdAt   DateTime?  @default(now())
+  updatedAt   DateTime?  @updatedAt
+}
+
+model Category {
+  id          Int          @id @default(autoincrement())
+  name        CategoryName @default(RAG_DOLLS)
+  description String?      @default("")
+  product     Product      @relation(fields: [productId], references: [id])
+  productId   Int
+}
+
+model Order {
+  id                  Int         @id @default(autoincrement())
+  intent              INTENT      @default(CAPTURE)
+  paypalOrderId       String?     @unique
+  capturedAt          DateTime?
+  purchase_units      Json[]
+  application_context Json
+  statusOrder         StatusOrder @default(CREATED)
+  cart                Cart[]
+}
+
+model Transaction {
+  id                 String      @id @default(uuid())
+  statusTransactions StatusOrder @default(CREATED)
+  purchase_units     Json[]
+  payer              Json
+}
+
+model Cart {
+  id             Int      @id @default(autoincrement())
+  userId         Int
+  user           User     @relation(fields: [userId], references: [id])
+  orderId        Int
+  orders         Order    @relation(fields: [orderId], references: [id])
+  cartItemId     Int
+  cartItems      CartItem @relation(fields: [cartItemId], references: [id])
+  currency       String
+  discountAmount Int
+  taxAmount      Int
+  shippingAmount Int
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @default(now())
+}
+
+model CartItem {
+  id        Int      @id @default(autoincrement())
+  carts     Cart[]
+  productId Int
+  product   Product  @relation(fields: [productId], references: [id])
+  name      String
+  quantity  Int
+  price     Float
+  addedAt   DateTime @default(now())
+}
+
+model User {
+  id               Int       @id @default(autoincrement())
+  name             String    @default("user name")
+  lastname         String    @default("user lastname")
+  email            String    @unique
+  phone            String    @unique
+  address          String
+  password         String
+  avatar           String?
+  status           Status    @default(INACTIVE)
+  lastLogin        DateTime  @default(now())
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @default(now())
+  role             Role[]    @default([USER])
+  resetToken       String?
+  resetTokenExpiry DateTime? @default(now())
+  cart             Cart[]
+}
+
+enum Role {
+  ADMIN
+  USER
+}
+
+enum Status {
+  ACTIVE
+  INACTIVE
+  OFFLINE
+}
+
+enum StatusOrder {
+  CREATED
+  SAVED
+  APPROVED
+  VOIDED
+  COMPLETED
+  PAYER_ACTION_REQUIRED
+}
+
+enum INTENT {
+  CAPTURE
+  AUTHORIZE
+}
+
+enum CategoryName {
+  RAG_DOLLS
+  BLENDER_DRESSES
+  BATH_GAMES
+  POSTCARDS
+}
