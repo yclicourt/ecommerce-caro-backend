@@ -1,22 +1,42 @@
 import { ConflictException, HttpException, Injectable } from '@nestjs/common';
-import { CreateProductDto } from './dto/create-product.dto';
 import { PrismaService } from 'src/common/prisma/prisma.service';
 import { CategoryName } from 'generated/prisma/enums';
 import { UpdateProductPayload } from './interfaces/update-product-payload.interface';
 import { PrismaClientKnownRequestError } from '@prisma/client/runtime/client';
+import { RegisterProductPayload } from './interfaces/register-product-payload.interface';
 
 @Injectable()
 export class ProductsService {
   constructor(private prisma: PrismaService) {}
 
   // Method to create a new product
-  createProductItem(createProductDto: CreateProductDto) {
+  createProductItem(productPayload: RegisterProductPayload) {
     return this.prisma.product.create({
       data: {
-        name: createProductDto.name,
-        description: createProductDto.description,
-        price: parseFloat(createProductDto.price),
-        image: createProductDto.image,
+        name: productPayload.name,
+        description: productPayload.description,
+        price: parseFloat(productPayload.price),
+        image: productPayload.image,
+        categories: Array.isArray(productPayload.categories)
+          ? {
+              create: (
+                productPayload.categories as Array<{
+                  name: CategoryName;
+                  description?: string;
+                }>
+              ).map((cat) => ({
+                name: cat.name,
+                description: cat.description || null,
+              })),
+            }
+          : undefined,
+      },
+      include: {
+        categories: {
+          select: {
+            name: true,
+          },
+        },
       },
     });
   }
@@ -95,7 +115,7 @@ export class ProductsService {
     });
   }
 
- // Method to delete product item
+  // Method to delete product item
   async deleteProductItem(id: number) {
     try {
       const productFound = await this.getProductItem(id);

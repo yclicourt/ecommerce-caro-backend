@@ -1,34 +1,48 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
+import {
+  Controller,
+  Post,
+  Body,
+  Get,
+  Delete,
+  ParseIntPipe,
+  Param,
+} from '@nestjs/common';
 import { CartService } from './cart.service';
 import { CreateCartDto } from './dto/create-cart.dto';
-import { UpdateCartDto } from './dto/update-cart.dto';
+import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { CartItemDto } from './dto/cart-item.dto';
 
+@ApiTags('cart')
 @Controller('cart')
 export class CartController {
   constructor(private readonly cartService: CartService) {}
 
   @Post()
-  create(@Body() createCartDto: CreateCartDto) {
-    return this.cartService.create(createCartDto);
+  @ApiOperation({ summary: 'Create a cart' })
+  @ApiResponse({ status: 403, description: 'Forbidden.' })
+  addItemCartController(@Body() createCartDto: CreateCartDto) {
+    return this.cartService.addCart(createCartDto);
+  }
+
+  @Post('item')
+  @ApiOperation({ summary: 'Create a cart item' })
+  @ApiResponse({ status: 403, description: 'Forbidden.' })
+  addItemController(@Body() createItemCartDto: CartItemDto) {
+    return this.cartService.addItemCart(createItemCartDto);
+  }
+
+  @Get('item')
+  getAllItemsCartsController() {
+    return this.cartService.getAllCartItems();
   }
 
   @Get()
-  findAll() {
-    return this.cartService.findAll();
+  disponibilityStockController(@Body() cartItemDto: CartItemDto) {
+    return this.cartService.validateDisponibilityStock(cartItemDto);
   }
 
-  @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.cartService.findOne(+id);
-  }
-
-  @Patch(':id')
-  update(@Param('id') id: string, @Body() updateCartDto: UpdateCartDto) {
-    return this.cartService.update(+id, updateCartDto);
-  }
-
-  @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.cartService.remove(+id);
-  }
+  @Delete('item/:id')
+  removeItemCartController(@Param('id', ParseIntPipe) cartItemId: number) {
+    return this.cartService.deleteItemCart(cartItemId);
+  } 
 }

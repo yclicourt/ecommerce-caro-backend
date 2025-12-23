@@ -1,0 +1,6 @@
+export enum CategoryName {
+  RAG_DOLLS = 'RAG_DOLLS',
+  BLENDER_DRESSES = 'BLENDER_DRESSES',
+  BATH_GAMES = 'BATH_GAMES',
+  POSTCARDS = 'POSTCARDS',
+}
